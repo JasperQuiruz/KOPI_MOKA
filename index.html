@@ -4,16 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Overtime Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root { --primary-color: #2c3e50; --accent-color: #3498db; --bg-color: #ffffff; --text-color: #333333; --grid-border: #000000; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); padding: 8px; width: 100%; }
         .header-bar { text-align: center; margin: 15px 0; position: relative; display: flex; justify-content: center; align-items: center; }
         #table-title { color: var(--primary-color); font-size: 1.4rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; padding: 10px; border: 1px dashed #ccc; border-radius: 6px; }
-        .screenshot-btn { position: absolute; right: 10px; font-size: 1.5rem; cursor: pointer; }
+        .download-btn { position: absolute; right: 10px; font-size: 1.5rem; cursor: pointer; }
         #month-input { position: absolute; top: 0; left: 50%; transform: translateX(-50%); opacity: 0; width: 200px; height: 50px; cursor: pointer; }
         .instruction { text-align: center; font-size: 0.75rem; color: #64748b; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid var(--grid-border); }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid var(--grid-border); background: white; }
         th, td { padding: 12px 2px; text-align: center; border: 1px solid var(--grid-border); font-size: 0.85rem; height: 45px; }
         th { background-color: var(--primary-color); color: white; font-weight: 600; text-transform: uppercase; }
         .total-cell { text-align: center; font-weight: 700; color: #16a34a; }
@@ -33,12 +34,12 @@
     <div class="header-bar">
         <h2 id="table-title">Select Month</h2>
         <input type="month" id="month-input">
-        <div class="screenshot-btn" onclick="window.print()">&#128247;</div>
+        <div class="download-btn" onclick="exportToPNG()">&#128190;</div>
     </div>
 
     <div class="instruction">Tap the title to change month. Tap cells to edit.</div>
 
-    <div class="table-wrapper">
+    <div id="capture-area">
         <table>
             <thead><tr><th>Date</th><th>In</th><th>Out</th><th>Total</th></tr></thead>
             <tbody id="ot-table-body"></tbody>
@@ -66,113 +67,20 @@
     </div>
 
     <script>
-        let currentTargetCell = null, logData = {}, currentMonth = "";
-        const monthInput = document.getElementById('month-input');
-        const title = document.getElementById('table-title');
-        const tbody = document.getElementById("ot-table-body");
-
-        function init() {
-            const now = new Date();
-            currentMonth = now.toISOString().slice(0, 7);
-            monthInput.value = currentMonth;
-            loadData();
-            renderTableGrid(currentMonth);
+        // ... (Keep all your existing logic for table generation and calculations)
+        
+        // New Export Function
+        function exportToPNG() {
+            const captureElement = document.getElementById("capture-area");
+            html2canvas(captureElement, { backgroundColor: "#ffffff" }).then(canvas => {
+                const link = document.createElement("a");
+                link.download = "overtime-log.png";
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
         }
 
-        function loadData() {
-            const saved = localStorage.getItem('otData');
-            if (saved) logData = JSON.parse(saved);
-        }
-
-        function saveData() { localStorage.setItem('otData', JSON.stringify(logData)); }
-
-        function updateTitle(val) {
-            const [y, m] = val.split('-');
-            title.innerText = new Date(y, m - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
-        }
-
-        function renderTableGrid(val) {
-            tbody.innerHTML = "";
-            updateTitle(val);
-            const [y, m] = val.split('-');
-            const days = new Date(y, m, 0).getDate();
-            for (let d = 1; d <= days; d++) {
-                if (!logData[val]) logData[val] = {};
-                if (!logData[val][d]) logData[val][d] = { inT: null, outT: null, diff: 0 };
-                
-                let dayData = logData[val][d];
-                tbody.innerHTML += `<tr><td>${d}</td>
-                    <td class="stamp-cell time-in-cell" data-day="${d}">${dayData.inStr || ''}</td>
-                    <td class="stamp-cell time-out-cell" data-day="${d}">${dayData.outStr || ''}</td>
-                    <td class="total-cell" id="total-${d}">${Math.floor(dayData.diff/60)}h ${String(dayData.diff%60).padStart(2,'0')}m</td></tr>`;
-            }
-            calcGrandTotal(val);
-        }
-
-        monthInput.addEventListener("change", (e) => { currentMonth = e.target.value; renderTableGrid(currentMonth); });
-
-        tbody.addEventListener("click", (e) => {
-            const cell = e.target.closest('.stamp-cell');
-            if (!cell) return;
-            currentTargetCell = cell;
-            document.getElementById('timeModal').classList.add('active');
-        });
-
-        function adjustValue(type, amt) {
-            let el = document.getElementById(type === 'hr' ? 'val-hr' : 'val-mn');
-            let val = parseInt(el.innerText) + amt;
-            if (type === 'hr') val = val > 12 ? 1 : (val < 1 ? 12 : val);
-            else val = val >= 60 ? 0 : (val < 0 ? 55 : val);
-            el.innerText = String(val).padStart(2, '0');
-        }
-
-        function toggleAmPm() { let el = document.getElementById('val-ap'); el.innerText = el.innerText === 'AM' ? 'PM' : 'AM'; }
-        function closeModal() { document.getElementById('timeModal').classList.remove('active'); }
-
-        function saveModal() {
-            let h = document.getElementById('val-hr').innerText, m = document.getElementById('val-mn').innerText, ap = document.getElementById('val-ap').innerText;
-            let d = currentTargetCell.dataset.day;
-            currentTargetCell.innerText = `${h}:${m} ${ap}`;
-            currentTargetCell.classList.add('stamped');
-            
-            let mins = (parseInt(h) % 12 + (ap === 'PM' ? 12 : 0)) * 60 + parseInt(m);
-            if (currentTargetCell.classList.contains('time-in-cell')) {
-                logData[currentMonth][d].inT = mins;
-                logData[currentMonth][d].inStr = `${h}:${m} ${ap}`;
-            } else {
-                logData[currentMonth][d].outT = mins;
-                logData[currentMonth][d].outStr = `${h}:${m} ${ap}`;
-            }
-            calcDay(d);
-            saveData();
-            closeModal();
-        }
-
-        function clearCell() {
-            let d = currentTargetCell.dataset.day;
-            currentTargetCell.innerText = "";
-            currentTargetCell.classList.remove('stamped');
-            if (currentTargetCell.classList.contains('time-in-cell')) logData[currentMonth][d].inT = null;
-            else logData[currentMonth][d].outT = null;
-            calcDay(d);
-            saveData();
-            closeModal();
-        }
-
-        function calcDay(d) {
-            let dayObj = logData[currentMonth][d];
-            let diff = (dayObj.outT || 0) - (dayObj.inT || 0);
-            if (diff < 0) diff = 0;
-            dayObj.diff = diff;
-            document.getElementById(`total-${d}`).innerText = `${Math.floor(diff/60)}h ${String(diff%60).padStart(2,'0')}m`;
-            calcGrandTotal(currentMonth);
-        }
-
-        function calcGrandTotal(m) {
-            let total = Object.values(logData[m]).reduce((a, b) => a + (b.diff || 0), 0);
-            document.getElementById("grand-total").innerText = `${Math.floor(total/60)}h ${String(total%60).padStart(2,'0')}m`;
-        }
-
+        // --- (Keep your existing JS init, loadData, saveData, etc here) ---
         init();
     </script>
 </body>
