@@ -3,55 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Overtime Tracker</title>
+    <title>OVERTIME TRACKER</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root { --primary-color: #2c3e50; --accent-color: #3498db; --bg-color: #ffffff; --text-color: #333333; --grid-border: #000000; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); padding: 8px; width: 100%; }
-        .header-bar { text-align: center; margin: 15px 0; position: relative; display: flex; justify-content: center; align-items: center; }
-        #table-title { color: var(--primary-color); font-size: 1.4rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; padding: 10px; border: 1px dashed #ccc; border-radius: 6px; }
-        .actions-right { position: absolute; right: 10px; display: flex; gap: 15px; }
-        .action-icon { cursor: pointer; font-size: 1.5rem; }
-        #month-input { position: absolute; top: 0; left: 50%; transform: translateX(-50%); opacity: 0; width: 200px; height: 50px; cursor: pointer; }
-        .instruction { text-align: center; font-size: 0.75rem; color: #64748b; margin-bottom: 15px; }
-        #capture-area { background: white; padding: 5px; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid var(--grid-border); }
-        th, td { padding: 12px 2px; text-align: center; border: 1px solid var(--grid-border); font-size: 0.85rem; height: 45px; }
-        th { background-color: var(--primary-color); color: white; font-weight: 600; text-transform: uppercase; }
-        .total-cell { text-align: center; font-weight: 700; color: #16a34a; }
-        .stamp-cell { cursor: pointer; font-weight: 600; background-color: #fafafa; }
-        .stamp-cell.stamped { background-color: #f0f9ff; color: var(--primary-color); }
-        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; visibility: hidden; opacity: 0; z-index: 1000; }
-        .modal-overlay.active { visibility: visible; opacity: 1; }
-        .modal-card { background: white; padding: 20px; border: 2px solid #000; border-radius: 8px; width: 90%; max-width: 320px; text-align: center; }
-        .picker-container { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
-        .picker-column { flex: 1; background: #f8fafc; border: 2px solid #000; border-radius: 6px; padding: 8px 0; }
-        .picker-btn { background: none; border: none; font-size: 1.2rem; color: var(--accent-color); font-weight: bold; cursor: pointer; }
-        .action-btn { padding: 10px 15px; cursor: pointer; border: 1px solid #000; border-radius: 6px; background: white; font-weight: 600; margin: 5px; }
+        /* CSS Variables to easily manage the color theme */
+        :root { 
+            --bg: #eef2ed; --card: #ffffff; --primary: #2d5a27; 
+            --accent: #4ade80; --border: #a3c9a8; --success: #166534; 
+        }
+        /* Reset default browser margins and ensure padding is included in width */
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        
+        /* Header section layout */
+        .header-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        #table-title { color: var(--primary); font-size: 1.2rem; font-weight: 800; text-transform: uppercase; margin: 0; }
+        
+        /* Action button style */
+        .action-icon { cursor: pointer; display: flex; padding: 6px; border-radius: 10px; background: #dcfce7; }
+        .action-icon i { width: 20px; height: 20px; stroke: var(--primary); }
+        
+        /* TABLE: Using border-collapse for clean grid lines */
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.8rem; }
+        /* Styling individual cells */
+        th, td { padding: 8px 2px; text-align: center; border: 1px solid var(--border); }
+        /* Header specific style */
+        th { background: #f0fdf4; color: var(--primary); }
+        
+        /* Define widths for specific columns */
+        th:nth-child(1), td:nth-child(1) { width: 15%; }
+        th:nth-child(2), td:nth-child(2) { width: 30%; }
+        th:nth-child(3), td:nth-child(3) { width: 30%; }
+        th:nth-child(4), td:nth-child(4) { width: 25%; }
+        
+        /* Cell interaction styles */
+        .stamp-cell { cursor: pointer; }
+        .stamp-cell.stamped { color: var(--success); background: #f0fdf4; font-weight: 700; }
+        
+        /* Modal for time entry - overlay covers the whole screen */
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(45, 90, 39, 0.3); display: none; z-index: 1000; justify-content: center; align-items: center; }
+        .modal-overlay.active { display: flex; }
+        /* The card inside the modal */
+        .modal-card { background: white; padding: 20px; border-radius: 20px; width: 90%; max-width: 320px; text-align: center; border: 2px solid var(--primary); }
+        
+        /* Time picker layout */
+        .picker-container { display: flex; gap: 10px; margin: 15px 0; justify-content: center; }
+        .picker-btn { border: 1px solid var(--primary); background: #f0fdf4; width: 45px; height: 45px; cursor: pointer; border-radius: 50%; }
+        .picker-value { font-size: 1.2rem; font-weight: 800; margin: 5px 0; min-width: 35px; color: var(--primary); }
+        
+        /* Button styles */
+        .action-btn { padding: 10px 20px; cursor: pointer; border: none; border-radius: 10px; font-weight: 700; margin: 5px; }
+        .btn-save { background: var(--primary); color: white; }
+        .btn-cancel { background: #e2e8f0; color: #475569; }
     </style>
 </head>
 <body>
 
-    <div class="header-bar">
-        <h2 id="table-title">Select Month</h2>
-        <input type="month" id="month-input">
-        <div class="actions-right">
-            <div class="action-icon" title="Print" onclick="window.print()">&#128247;</div>
-            <div class="action-icon" title="Save as PNG" onclick="exportToPNG()">&#128190;</div>
-        </div>
-    </div>
-
-    <div class="instruction">Tap the title to change month. Tap cells to edit.</div>
-
     <div id="capture-area">
+        <div class="header-wrapper">
+            <div style="position: relative; cursor: pointer;">
+                <h2 id="table-title">MONTH</h2>
+                <input type="month" id="month-input" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+            </div>
+            <div class="action-icon" onclick="exportToPNG()"><i data-lucide="download"></i></div>
+        </div>
+
         <table>
-            <thead><tr><th>Date</th><th>In</th><th>Out</th><th>Total</th></tr></thead>
+            <thead><tr><th>DATE</th><th>IN</th><th>OUT</th><th>TOTAL</th></tr></thead>
             <tbody id="ot-table-body"></tbody>
             <tfoot>
-                <tr>
-                    <td colspan="3" style="text-align: right; padding-right: 10px; font-weight: 700;">Total:</td>
-                    <td id="grand-total" style="font-weight: 800; color: #1e3a8a;">0h 00m</td>
+                <tr style="background: #f0fdf4;">
+                    <td colspan="3" style="text-align: right; padding-right: 10px; font-weight: 800; color: var(--primary);">TOTAL</td>
+                    <td id="grand-total" style="font-weight: 900; color: var(--success);">0h 00m</td>
                 </tr>
             </tfoot>
         </table>
@@ -59,106 +83,80 @@
 
     <div class="modal-overlay" id="timeModal">
         <div class="modal-card">
-            <h3 id="modal-heading">Set Time</h3>
+            <h3>Set Time</h3>
             <div class="picker-container">
-                <div class="picker-column"><button class="picker-btn" onclick="adjustValue('hr', 1)">&blacktriangle;</button><div id="val-hr">12</div><button class="picker-btn" onclick="adjustValue('hr', -1)">&blacktriangledown;</button></div>
-                <div class="picker-column"><button class="picker-btn" onclick="adjustValue('mn', 5)">&blacktriangle;</button><div id="val-mn">00</div><button class="picker-btn" onclick="adjustValue('mn', -5)">&blacktriangledown;</button></div>
-                <div class="picker-column"><button class="picker-btn" onclick="toggleAmPm()">&blacktriangle;</button><div id="val-ap">AM</div><button class="picker-btn" onclick="toggleAmPm()">&blacktriangledown;</button></div>
+                <div><button class="picker-btn" onclick="adjustValue('hr', 1)">▲</button><div id="val-hr" class="picker-value">12</div><button class="picker-btn" onclick="adjustValue('hr', -1)">▼</button></div>
+                <div><button class="picker-btn" onclick="adjustValue('mn', 5)">▲</button><div id="val-mn" class="picker-value">00</div><button class="picker-btn" onclick="adjustValue('mn', -5)">▼</button></div>
+                <div><button class="picker-btn" onclick="toggleAmPm()">▲</button><div id="val-ap" class="picker-value">AM</div><button class="picker-btn" onclick="toggleAmPm()">▼</button></div>
             </div>
-            <button class="action-btn" onclick="closeModal()">Back</button>
-            <button class="action-btn" onclick="clearCell()">Clear</button>
-            <button class="action-btn" onclick="saveModal()">Save</button>
+            <button class="action-btn btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="action-btn btn-save" onclick="saveModal()">Save</button>
         </div>
     </div>
 
     <script>
-        let currentTargetCell = null, logData = {}, currentMonth = "";
+        lucide.createIcons(); // Activate the icons library
+        // Variables for data and state
+        let currentTargetCell = null, logData = JSON.parse(localStorage.getItem('otData')) || {}, currentMonth = new Date().toISOString().slice(0, 7);
         const monthInput = document.getElementById('month-input'), title = document.getElementById('table-title'), tbody = document.getElementById("ot-table-body");
 
-        function init() {
-            const now = new Date();
-            currentMonth = now.toISOString().slice(0, 7);
-            monthInput.value = currentMonth;
-            const saved = localStorage.getItem('otData');
-            if (saved) logData = JSON.parse(saved);
-            renderTableGrid(currentMonth);
-        }
-
+        // Initialization function
+        function init() { monthInput.value = currentMonth; renderTableGrid(currentMonth); }
+        
+        // Renders rows into the table
         function renderTableGrid(val) {
-            tbody.innerHTML = ""; updateTitle(val);
+            tbody.innerHTML = "";
             const [y, m] = val.split('-');
+            title.innerText = new Date(y, m - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
             const days = new Date(y, m, 0).getDate();
             if (!logData[val]) logData[val] = {};
             for (let d = 1; d <= days; d++) {
-                if (!logData[val][d]) logData[val][d] = { inT: null, outT: null, diff: 0 };
+                if (!logData[val][d]) logData[val][d] = { inT: null, outT: null, diff: 0, inStr: '', outStr: '' };
                 let day = logData[val][d];
-                tbody.innerHTML += `<tr><td>${d}</td><td class="stamp-cell time-in-cell" data-day="${d}">${day.inStr || ''}</td><td class="stamp-cell time-out-cell" data-day="${d}">${day.outStr || ''}</td><td class="total-cell" id="total-${d}">${Math.floor(day.diff/60)}h ${String(day.diff%60).padStart(2,'0')}m</td></tr>`;
+                tbody.innerHTML += `<tr><td>${d}</td><td class="stamp-cell time-in-cell" data-day="${d}">${day.inStr || ''}</td><td class="stamp-cell time-out-cell" data-day="${d}">${day.outStr || ''}</td><td id="total-${d}">${Math.floor(day.diff/60)}h ${String(day.diff%60).padStart(2,'0')}m</td></tr>`;
             }
             calcGrandTotal(val);
         }
 
-        function updateTitle(val) { const [y, m] = val.split('-'); title.innerText = new Date(y, m - 1).toLocaleString('default', { month: 'long', year: 'numeric' }); }
-        monthInput.addEventListener("change", (e) => { currentMonth = e.target.value; renderTableGrid(currentMonth); });
-
-        tbody.addEventListener("click", (e) => {
-            const cell = e.target.closest('.stamp-cell');
-            if (!cell) return;
-            currentTargetCell = cell;
-            document.getElementById('timeModal').classList.add('active');
-        });
-
-        function adjustValue(type, amt) {
-            let el = document.getElementById(type === 'hr' ? 'val-hr' : 'val-mn');
-            let val = parseInt(el.innerText) + amt;
-            if (type === 'hr') val = val > 12 ? 1 : (val < 1 ? 12 : val);
-            else val = val >= 60 ? 0 : (val < 0 ? 55 : val);
-            el.innerText = String(val).padStart(2, '0');
-        }
-
+        // Event listener for opening the modal when a time cell is clicked
+        tbody.addEventListener("click", (e) => { const cell = e.target.closest('.stamp-cell'); if (cell) { currentTargetCell = cell; document.getElementById('timeModal').classList.add('active'); } });
+        
+        // Time adjustment logic (Hours and Minutes)
+        function adjustValue(t, a) { let el = document.getElementById(t === 'hr' ? 'val-hr' : 'val-mn'), v = parseInt(el.innerText) + a; if (t === 'hr') v = v > 12 ? 1 : (v < 1 ? 12 : v); else v = v >= 60 ? 0 : (v < 0 ? 55 : v); el.innerText = String(v).padStart(2, '0'); }
         function toggleAmPm() { let el = document.getElementById('val-ap'); el.innerText = el.innerText === 'AM' ? 'PM' : 'AM'; }
-        function closeModal() { document.getElementById('timeModal').classList.remove('active'); }
-
+        
+        // Save time into local data storage
         function saveModal() {
-            let h = document.getElementById('val-hr').innerText, m = document.getElementById('val-mn').innerText, ap = document.getElementById('val-ap').innerText;
-            let d = currentTargetCell.dataset.day;
-            currentTargetCell.innerText = `${h}:${m} ${ap}`;
-            currentTargetCell.classList.add('stamped');
-            let mins = (parseInt(h) % 12 + (ap === 'PM' ? 12 : 0)) * 60 + parseInt(m);
-            if (currentTargetCell.classList.contains('time-in-cell')) { logData[currentMonth][d].inT = mins; logData[currentMonth][d].inStr = `${h}:${m} ${ap}`; }
-            else { logData[currentMonth][d].outT = mins; logData[currentMonth][d].outStr = `${h}:${m} ${ap}`; }
+            let h = parseInt(document.getElementById('val-hr').innerText), m = document.getElementById('val-mn').innerText, ap = document.getElementById('val-ap').innerText, d = currentTargetCell.dataset.day;
+            let timeStr = `${h}:${m} ${ap}`;
+            currentTargetCell.innerText = timeStr; currentTargetCell.classList.add('stamped');
+            let mins = (h % 12 + (ap === 'PM' ? 12 : 0)) * 60 + parseInt(m);
+            if (currentTargetCell.classList.contains('time-in-cell')) { logData[currentMonth][d].inT = mins; logData[currentMonth][d].inStr = timeStr; } else { logData[currentMonth][d].outT = mins; logData[currentMonth][d].outStr = timeStr; }
             calcDay(d); localStorage.setItem('otData', JSON.stringify(logData)); closeModal();
         }
 
-        function clearCell() {
-            let d = currentTargetCell.dataset.day;
-            currentTargetCell.innerText = ""; currentTargetCell.classList.remove('stamped');
-            if (currentTargetCell.classList.contains('time-in-cell')) logData[currentMonth][d].inT = null; else logData[currentMonth][d].outT = null;
-            calcDay(d); localStorage.setItem('otData', JSON.stringify(logData)); closeModal();
-        }
-
+        // Calculate individual day overtime
         function calcDay(d) {
-            let dayObj = logData[currentMonth][d];
-            let diff = (dayObj.outT || 0) - (dayObj.inT || 0);
-            dayObj.diff = diff < 0 ? 0 : diff;
+            let dayObj = logData[currentMonth][d]; dayObj.diff = Math.max(0, (dayObj.outT || 0) - (dayObj.inT || 0));
             document.getElementById(`total-${d}`).innerText = `${Math.floor(dayObj.diff/60)}h ${String(dayObj.diff%60).padStart(2,'0')}m`;
             calcGrandTotal(currentMonth);
         }
 
+        // Sum up overtime for the entire month
         function calcGrandTotal(m) {
             let total = Object.values(logData[m]).reduce((a, b) => a + (b.diff || 0), 0);
             document.getElementById("grand-total").innerText = `${Math.floor(total/60)}h ${String(total%60).padStart(2,'0')}m`;
         }
 
-        function exportToPNG() {
-            html2canvas(document.getElementById("capture-area"), { backgroundColor: "#ffffff" }).then(canvas => {
-                const link = document.createElement("a");
-                link.download = "overtime-log.png";
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-            });
-        }
-
-        init();
+        // Closes the modal
+        function closeModal() { document.getElementById('timeModal').classList.remove('active'); }
+        
+        // Convert the HTML element to a downloadable PNG
+        function exportToPNG() { html2canvas(document.getElementById("capture-area"), { scale: 2 }).then(c => { let a = document.createElement("a"); a.download = "OVERTIME.png"; a.href = c.toDataURL(); a.click(); }); }
+        
+        // Listener for month input changes
+        monthInput.addEventListener("change", (e) => { currentMonth = e.target.value; renderTableGrid(currentMonth); });
+        init(); // Run the init function on load
     </script>
 </body>
 </html>
