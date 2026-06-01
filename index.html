@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Instant PHP/Coin Converter & Matrix</title>
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Coin Converter">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <link rel="apple-touch-icon" sizes="512x512" href="peso.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="peso.png">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            
+            background-image: url('HD-wallpaper-lucky-clover-beautiful-green-life-love-luck-nature.jpg'); 
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-color: #1b5e20;
+
+            position: fixed;
+            left: 0;
+            top: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .calc-box { 
+            background: rgba(255, 255, 255, 0.25); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 30px; 
+            border-radius: 16px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.35); 
+            text-align: center; 
+            width: 320px;
+            max-width: 90%;
+            position: relative; 
+            padding-top: 82px; 
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            user-select: none;
+            box-sizing: border-box;
+        }
+        
+        .rating-display {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px; 
+            font-weight: 900; 
+            color: #000000;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.35); 
+            padding: 6px 14px; 
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            z-index: 4;
+        }
+
+        .mode-btn {
+            position: absolute;
+            top: 17px;
+            left: 15px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            color: white;
+            border: none;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            transition: background-color 0.2s ease;
+            z-index: 5;
+        }
+        
+        .bg-green { background-color: #2e7d32; }
+        .bg-green:hover { background-color: #1b5e20; }
+        .bg-blue { background-color: #1a73e8; }
+        .bg-blue:hover { background-color: #1557b0; }
+        
+        .settings-toggle {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+        }
+        .settings-toggle img {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
+        }
+        .settings-toggle:hover {
+            transform: scale(1.15) rotate(30deg);
+        }
+        
+        .modal-overlay {
+            display: none; 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.55); 
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .settings-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 260px;
+            text-align: left;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            font-size: 18px;
+            color: #8a8d91;
+            cursor: pointer;
+            font-weight: bold;
+            user-select: none;
+        }
+        
+        .settings-panel label {
+            font-size: 11px;
+            color: #65676b;
+            margin-bottom: 8px;
+            display: block;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .settings-panel input {
+            font-size: 18px;
+            padding: 8px;
+            text-align: center;
+            width: 100%;
+            border: 2px solid #e4e6eb;
+            border-radius: 6px;
+            box-sizing: border-box;
+            outline: none;
+            margin-bottom: 15px;
+        }
+
+        .btn-save {
+            width: 100%;
+            padding: 10px 0;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            text-align: center;
+            text-transform: uppercase;
+            background-color: #2e7d32;
+            color: white;
+        }
+
+        .output-label-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 6px;
+            width: 100%;
+        }
+        .output-label-container img {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+        }
+
+        .label-with-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+        .label-with-icon img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+
+        .result-label {
+            font-size: 13px; 
+            color: #000000; 
+            margin: 0; 
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.4);
+        }
+        
+        .result { 
+            font-size: 44px; 
+            font-weight: 900; 
+            color: #000000; 
+            margin-bottom: 6px;
+            text-shadow: 0px 1px 3px rgba(255, 255, 255, 0.8);
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: rgba(0, 0, 0, 0.25);
+            margin: 20px 0;
+        }
+        
+        label.input-label { 
+            font-size: 14px; 
+            color: #000000; 
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.4);
+            margin: 0;
+        }
+        .main-input { 
+            font-size: 28px; 
+            padding: 12px; 
+            width: 100%; 
+            text-align: center; 
+            border: 2px solid rgba(0, 0, 0, 0.25); 
+            border-radius: 8px; 
+            box-sizing: border-box;
+            outline: none;
+            background: rgba(255, 255, 255, 0.8); 
+            color: #000000;
+            font-weight: 700;
+        }
+
+        .pricelist-launcher-btn {
+            width: 100%;
+            margin-top: 18px;
+            background-color: #ff9100;
+            color: #000000;
+            border: none;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 900;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: background-color 0.2s ease;
+        }
+        .pricelist-launcher-btn:active {
+            background-color: #e68200;
+        }
+
+        /* ----------------------------------------------------
+           STABILIZED FULL-SCREEN MATRIX LAYOVER & RENDERING
+           ---------------------------------------------------- */
+        .matrix-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f4f6f9; 
+            z-index: 2000;
+            overflow-x: hidden;
+            overflow-y: auto; 
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Fixed Navigation Options Toolbar inside the Layover */
+        .matrix-sticky-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            padding: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 2100;
+            display: flex;
+            gap: 10px;
+            box-sizing: border-box;
+        }
+
+        .matrix-sticky-header button {
+            padding: 14px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn-close-matrix { flex: 1; background-color: #e5e7eb; color: #1f2937; }
+        .btn-close-matrix:active { background-color: #d1d5db; }
+        .btn-save-photo { flex: 2; background-color: #e67e22; color: white; }
+        .btn-save-photo:active { background-color: #d35400; }
+        .btn-surprise { flex: 1.2; background-color: #4f46e5; color: white; white-space: nowrap; }
+        .btn-surprise:active { background-color: #3730a3; }
+
+        /* Outer Frame alignment wrapper */
+        .scale-wrapper {
+            margin-top: 100px; 
+            margin-bottom: 40px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow: visible;
+        }
+
+        /* DYNAMIC THEME ENGINE VARIABLE VALUES */
+        :root {
+            --canvas-bg: #f5f5f5;
+            --title-color: #111827;
+            --th-bg: #263238;
+            --th-text: #ffffff;
+            --calc-left-color: #d35400;
+            --calc-right-color: #d35400;
+            --col-grey-bg: #f8f9fa;
+            --col-white-bg: #ffffff;
+            --col-white-text: #2c3e50;
+        }
+
+        /* 1080x2800 STRUCTURAL MATRICES - CRASH IMMUNE RESTRUCTURE */
+        #photoTargetBlock {
+            width: 1080px !important;
+            height: 2800px !important;
+            min-height: 2800px !important;
+            max-height: 2800px !important;
+            padding: 45px 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            transform-origin: top center; 
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--canvas-bg) !important;
+            box-sizing: border-box !important;
+        }
+
+        .canvas-title {
+            text-align: center;
+            font-size: 76px; 
+            font-weight: 950;
+            margin-bottom: 30px;
+            color: var(--title-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            flex-shrink: 0;
+        }
+
+        .matrix-table { 
+            width: 100% !important; 
+            border-collapse: collapse !important; 
+            text-align: center !important; 
+            table-layout: auto !important; 
+            flex-grow: 1;
+            box-sizing: border-box !important;
+        }
+      
+        .matrix-table th, .matrix-table td { 
+            border: 1px solid #cbd5e1 !important; 
+            width: 25% !important; 
+            white-space: nowrap !important; 
+            overflow: hidden !important;
+            vertical-align: middle !important;
+            box-sizing: border-box !important;
+        }
+        
+        .matrix-table th { 
+            background-color: var(--th-bg) !important; 
+            color: var(--th-text) !important; 
+            font-weight: bold !important; 
+            font-size: 44px !important; 
+            letter-spacing: 1px !important; 
+            height: 105px !important;
+        }
+        
+        .matrix-table td { 
+            font-size: 48px !important; 
+            font-weight: bold !important; 
+            padding: 18px 0px !important;
+        }
+        
+        .col-grey { background-color: var(--col-grey-bg) !important; }
+        .col-white { background-color: var(--col-white-bg) !important; color: var(--col-white-text) !important; }
+        
+        .calc-left-text { color: var(--calc-left-color) !important; }
+        .calc-right-text { color: var(--calc-right-color) !important; }
+    </style>
+</head>
+<body>
+
+<div class="calc-box">
+    <button class="mode-btn bg-green" id="modeBtn" onclick="toggleMode()">
+        P TO C
+    </button>
+    
+    <div class="rating-display" id="rateDisplay">Rate: Not Set</div>
+    
+    <span class="settings-toggle" onclick="openSettings()">
+        <img src="settings.png" alt="Settings">
+    </span>
+
+    <div class="output-label-container">
+        <img id="resIcon" src="dollar.png" alt="Icon">
+        <div class="result-label" id="resLabel">COINS OUT</div>
+    </div>
+    <div class="result" id="outputVal">0</div>
+    
+    <div class="divider"></div>
+    
+    <div class="label-with-icon">
+        <img id="labelIcon" src="peso.png" alt="Icon">
+        <label for="inputVal" class="input-label" id="inpLabel">Enter Pesos (PHP)</label>
+    </div>
+    
+    <input type="text" inputmode="numeric" id="inputVal" class="main-input" placeholder="0" oninput="formatAndCalculate(this)" autofocus>
+
+    <button class="pricelist-launcher-btn" onclick="openPriceListModal()">View Price List 📋</button>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+    <div class="settings-panel">
+        <span class="close-btn" onclick="closeSettings()">✕</span>
+        <label for="divisorVal">Modify Divisor Rule:</label>
+        <input type="number" id="divisorVal" value="62.6" step="0.1">
+        
+        <button class="btn-save" onclick="saveSettings()">Save Changes</button>
+    </div>
+</div>
+
+<div class="matrix-modal-overlay" id="matrixModal">
+    <div class="matrix-sticky-header">
+        <button class="btn-close-matrix" onclick="closePriceListModal()">Close ✕</button>
+        <button class="btn-save-photo" onclick="exportToPhoto()">Save As Photo Image</button>
+        <button class="btn-surprise" onclick="applyRandomHarmonizedPalette()">Surprise Me 🎲</button>
+    </div>
+
+    <div class="scale-wrapper" id="scaleWrapper">
+        <div id="photoTargetBlock">
+            <div class="canvas-title">POPPO COINS</div>
+            <table class="matrix-table">
+                <thead>
+                    <tr>
+                        <th>PRICE</th>
+                        <th>COINS</th>
+                        <th>PRICE</th>
+                        <th>COINS</th>
+                    </tr>
+                </thead>
+                <tbody id="matrixBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+let isPesoToCoin = true;
+let activeDivisor = localStorage.getItem('savedDivisor') ? parseFloat(localStorage.getItem('savedDivisor')) : 62.6;
+
+// Completely Formatted & Aligned Array Mapping Pairs
+const leftCoins = [
+    8000, 9000, 10000, 11000, 12000, 13000, 14000, 15000, 20000, 30000, 
+    40000, 50000, 60000, 70000, 80000, 90000, 100000, 150000, 200000, 
+    250000, 300000, 350000, 400000, 450000, 500000, 550000, 600000, 
+    650000, 700000, 750000, 800000, 850000, 900000, 950000, 1000000
+];
+
+const rightCosts = [
+    100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 
+    750, 800, 850, 900, 950, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 
+    4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000
+];
+
+// Reconstructed Visual Palettes for "Surprise Me"
+const optimizedPalettes = [
+    { canvasBg: "#f5f5f5", title: "#111827", thBg: "#263238", thText: "#ffffff", calcLeft: "#d35400", calcRight: "#2e7d32", greyBg: "#f8f9fa", whiteBg: "#ffffff", whiteTxt: "#2c3e50" },
+    { canvasBg: "#ffffff", title: "#1e3a8a", thBg: "#475569", thText: "#ffffff", calcLeft: "#16a34a", calcRight: "#b85c38", greyBg: "#f1f5f9", whiteBg: "#ffffff", whiteTxt: "#1e293b" },
+    { canvasBg: "#faf9f6", title: "#2d3748", thBg: "#1a202c", thText: "#ffffff", calcLeft: "#e65100", calcRight: "#2563eb", greyBg: "#edf2f7", whiteBg: "#ffffff", whiteTxt: "#1a202c" },
+    { canvasBg: "#f4f7f6", title: "#0f4c5c", thBg: "#2c6b6e", thText: "#ffffff", calcLeft: "#b85c38", calcRight: "#16a34a", greyBg: "#e5ede9", whiteBg: "#ffffff", whiteTxt: "#2f3e46" },
+    { canvasBg: "#fffcf7", title: "#5c3d2e", thBg: "#6f4e37", thText: "#ffffff", calcLeft: "#a0522d", calcRight: "#e65100", greyBg: "#f5ebe0", whiteBg: "#ffffff", whiteTxt: "#2b1810" },
+    { canvasBg: "#f8fafc", title: "#0f172a", thBg: "#1e293b", thText: "#ffffff", calcLeft: "#2563eb", calcRight: "#2e7d32", greyBg: "#f1f5f9", whiteBg: "#ffffff", whiteTxt: "#0f172a" }
+];
+let lastPaletteIndex = 0;
+
+updateRateDisplay();
+
+function updateRateDisplay() {
+    let display = document.getElementById('rateDisplay');
+    if (activeDivisor !== null && !isNaN(activeDivisor)) {
+        display.innerText = "Rate: " + activeDivisor.toLocaleString('en-US');
+    } else {
+        display.innerText = "Rate: Not Set";
+    }
+}
+
+function openSettings() {
+    document.getElementById('divisorVal').value = activeDivisor;
+    document.getElementById('modalOverlay').style.display = 'flex';
+}
+
+function closeSettings() {
+    document.getElementById('modalOverlay').style.display = 'none';
+}
+
+function saveSettings() {
+    let inputDivisor = parseFloat(document.getElementById('divisorVal').value);
+    if (!isNaN(inputDivisor) && inputDivisor !== 0) {
+        activeDivisor = inputDivisor;
+        localStorage.setItem('savedDivisor', activeDivisor);
+        updateRateDisplay(); 
+        calculate();
+        closeSettings();
+    } else {
+        alert("Please enter a valid divisor number.");
+    }
+}
+
+function toggleMode() {
+    isPesoToCoin = !isPesoToCoin;
+    
+    let modeBtn = document.getElementById('modeBtn');
+    let resLabel = document.getElementById('resLabel');
+    let resIcon = document.getElementById('resIcon');
+    let inpLabel = document.getElementById('inpLabel');
+    let inputVal = document.getElementById('inputVal');
+    let labelIcon = document.getElementById('labelIcon');
+    
+    if (isPesoToCoin) {
+        modeBtn.className = "mode-btn bg-green";
+        modeBtn.innerText = "P TO C";
+        resLabel.innerText = "COINS OUT"; 
+        resIcon.src = "dollar.png"; 
+        inpLabel.innerText = "Enter Pesos (PHP)";
+        labelIcon.src = "peso.png"; 
+    } else {
+        modeBtn.className = "mode-btn bg-blue";
+        modeBtn.innerText = "C TO P";
+        resLabel.innerText = "PESOS OUT"; 
+        resIcon.src = "peso.png"; 
+        inpLabel.innerText = "Enter Coins";
+        labelIcon.src = "dollar.png"; 
+    }
+    
+    inputVal.value = "";
+    calculate();
+}
+
+function formatAndCalculate(input) {
+    let cursorPosition = input.selectionStart;
+    let originalLength = input.value.length;
+
+    let cleanValue = input.value.replace(/[^0-9]/g, '');
+    
+    if (cleanValue === '') {
+        input.value = '';
+        calculate();
+        return;
+    }
+
+    let formattedValue = parseInt(cleanValue, 10).toLocaleString('en-US');
+    input.value = formattedValue;
+
+    let newLength = formattedValue.length;
+    input.setSelectionRange(cursorPosition + (newLength - originalLength), cursorPosition + (newLength - originalLength));
+
+    calculate();
+}
+
+function calculate() {
+    let rawInputString = document.getElementById('inputVal').value.replace(/,/g, '');
+    let x = parseFloat(rawInputString);
+    let output = document.getElementById('outputVal');
+    
+    if (isNaN(x) || isNaN(activeDivisor) || activeDivisor === 0 || x <= 0) {
+        output.innerText = "0";
+        return;
+    }
+    
+    let rawResult = 0;
+    let finalResult = 0;
+    
+    if (isPesoToCoin) {
+        rawResult = (x / activeDivisor) * 1000000;
+        finalResult = Math.floor(rawResult / 100) * 100;
+    } else {
+        rawResult = (x / 1000000) * activeDivisor;
+        finalResult = Math.ceil(rawResult);
+    }
+    
+    output.innerText = finalResult.toLocaleString();
+}
+
+/* ----------------------------------------------------
+   STABILIZED PRICE MATRIX RENDER PIPELINES
+   ---------------------------------------------------- */
+function openPriceListModal() {
+    document.getElementById('matrixModal').style.display = 'flex';
+    calculateMatrix();
+    adjustScale();
+    window.addEventListener('resize', adjustScale);
+}
+
+function closePriceListModal() {
+    document.getElementById('matrixModal').style.display = 'none';
+    window.removeEventListener('resize', adjustScale);
+}
+
+function applyRandomHarmonizedPalette() {
+    let nextIndex = lastPaletteIndex;
+    while (nextIndex === lastPaletteIndex) {
+        nextIndex = Math.floor(Math.random() * optimizedPalettes.length);
+    }
+    lastPaletteIndex = nextIndex;
+    const choice = optimizedPalettes[nextIndex];
+    
+    const root = document.documentElement;
+    root.style.setProperty('--canvas-bg', choice.canvasBg);
+    root.style.setProperty('--title-color', choice.title);
+    root.style.setProperty('--th-bg', choice.thBg);
+    root.style.setProperty('--th-text', choice.thText);
+    root.style.setProperty('--calc-left-color', choice.calcLeft);
+    root.style.setProperty('--calc-right-color', choice.calcRight);
+    root.style.setProperty('--col-grey-bg', choice.greyBg);
+    root.style.setProperty('--col-white-bg', choice.whiteBg);
+    root.style.setProperty('--col-white-text', choice.whiteTxt);
+}
+
+function calculateMatrix() {
+    const tbody = document.getElementById('matrixBody');
+    tbody.innerHTML = '';
+
+    if (isNaN(activeDivisor) || activeDivisor <= 0) return;
+
+    for (let i = 0; i < leftCoins.length; i++) {
+        const coinLeft = leftCoins[i];
+        const costRight = rightCosts[i];
+
+        // Left column logic: Calculates direct price cost
+        let rawCostLeft = (coinLeft / 1000000) * activeDivisor;
+        
+        // RESTORED: Custom lower row premium buffer rule (+1.5) under 15,000 coins
+        if (coinLeft < 15000) {
+            rawCostLeft += 1.5;
+        }
+        let computedCostLeft = Math.ceil(rawCostLeft);
+
+        // Right column logic: Calculates exact coin outputs
+        let rawCoinsRight = (costRight / activeDivisor) * 1000000;
+        let computedCoinsRight = Math.floor(rawCoinsRight / 100) * 100;
+
+        const rowHTML = `
+            <tr>
+                <td class="col-grey calc-left-text">₱${computedCostLeft.toLocaleString()}</td>
+                <td class="col-white">${coinLeft.toLocaleString()}</td>
+                <td class="col-grey" style="color: var(--col-white-text) !important;">₱${costRight.toLocaleString()}</td>
+                <td class="col-white calc-right-text">${computedCoinsRight.toLocaleString()}</td>
+            </tr>`;
+        tbody.innerHTML += rowHTML;
+    }
+}
+
+function adjustScale() {
+    const target = document.getElementById('photoTargetBlock');
+    const wrapper = document.getElementById('scaleWrapper');
+    const screenWidth = window.innerWidth;
+    
+    if (!target || !wrapper) return;
+    
+    const scaleFactor = screenWidth / 1080;
+    target.style.transform = `scale(${scaleFactor})`;
+    wrapper.style.height = `${2800 * scaleFactor}px`;
+}
+
+function exportToPhoto() {
+    const targetElement = document.getElementById('photoTargetBlock');
+    const currentTransform = targetElement.style.transform;
+    const currentBgColor = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim();
+
+    targetElement.style.transform = 'none';
+
+    html2canvas(targetElement, {
+        width: 1080,
+        height: 2800, 
+        scale: 1, 
+        logging: false,
+        backgroundColor: currentBgColor, 
+        windowWidth: 1080,
+        windowHeight: 2800,
+        scrollX: 0,
+        scrollY: 0
+    }).then(canvas => {
+        const imageURI = canvas.toDataURL("image/png");
+        
+        const downloadTrigger = document.createElement('a');
+        downloadTrigger.href = imageURI;
+        downloadTrigger.download = `POPPO_MATRIX_RATE_${activeDivisor}.png`;
+        
+        document.body.appendChild(downloadTrigger);
+        downloadTrigger.click();
+        document.body.removeChild(downloadTrigger);
+
+        targetElement.style.transform = currentTransform;
+        adjustScale();
+    });
+}
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Offline mode ready.'))
+            .catch(err => console.log('Service worker failed', err));
+    });
+}
+</script>
+
+</body>
+</html>
