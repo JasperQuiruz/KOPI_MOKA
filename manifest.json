@@ -1,0 +1,17 @@
+{
+  "short_name": "Kopi Moka",
+  "name": "KOPI MOKA CALENDAR",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/591/591576.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#090a0f",
+  "theme_color": "#4ade80",
+  "display": "standalone",
+  "orientation": "portrait"
+}
