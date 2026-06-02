@@ -4,52 +4,95 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>OVERTIME TRACKER</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/591/591576.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#090a0f">
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root { 
-            --bg: #eef2ed; --card: #ffffff; --primary: #2d5a27; 
-            --accent: #4ade80; --border: #a3c9a8; --success: #166534; 
+            --bg: #090a0f; 
+            --card: #12141c; 
+            --primary: #4ade80; 
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #1e293b; 
+            --card-inner: #1e2230;
+            --danger: #f87171;
         }
         * { box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; padding: 10px; display: flex; justify-content: center; }
-        
-        /* ADDED BORDER HERE */
-        #capture-area { 
-            background: var(--card); padding: 15px; border-radius: 20px; 
-            width: 100%; max-width: 500px;
-            border: 2px solid var(--primary); /* The border frame */
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text-main);
+            margin: 0; 
+            padding: 10px; 
+            display: flex; 
+            justify-content: center; 
         }
         
-        .header-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        #table-title { color: var(--primary); font-size: 1.2rem; font-weight: 800; text-transform: uppercase; margin: 0; }
-        .action-icon { cursor: pointer; display: flex; padding: 6px; border-radius: 10px; background: #dcfce7; }
+        #capture-area { 
+            background: var(--card); 
+            padding: 20px; 
+            border-radius: 24px; 
+            width: 100%; 
+            max-width: 500px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        .header-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        #table-title { color: var(--text-main); font-size: 1.3rem; font-weight: 800; text-transform: uppercase; margin: 0; letter-spacing: 0.5px; }
+        
+        .action-icon { 
+            cursor: pointer; 
+            display: flex; 
+            padding: 8px; 
+            border-radius: 12px; 
+            background: var(--card-inner); 
+            border: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+        .action-icon:hover { background: #2a2f42; }
         .action-icon i { width: 20px; height: 20px; stroke: var(--primary); }
         
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.8rem; }
-        th, td { padding: 8px 2px; text-align: center; border: 1px solid var(--border); }
-        th { background: #f0fdf4; color: var(--primary); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 0.85rem; }
+        th, td { padding: 10px 4px; text-align: center; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
+        th:last-child, td:last-child { border-right: none; }
         
-        th:nth-child(1), td:nth-child(1) { width: 15%; }
+        th { background: var(--card-inner); color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; font-size: 0.75rem; }
+        tr:last-child td { border-bottom: none; }
+        
+        th:nth-child(1), td:nth-child(1) { width: 15%; border-left: none; color: var(--text-muted); }
         th:nth-child(2), td:nth-child(2) { width: 30%; }
         th:nth-child(3), td:nth-child(3) { width: 30%; }
-        th:nth-child(4), td:nth-child(4) { width: 25%; }
+        th:nth-child(4), td:nth-child(4) { width: 25%; font-weight: 600; }
         
-        .stamp-cell { cursor: pointer; }
-        .stamp-cell.stamped { color: var(--success); background: #f0fdf4; font-weight: 700; }
+        .stamp-cell { cursor: pointer; transition: background 0.2s; color: var(--text-muted); }
+        .stamp-cell:hover { background: rgba(255,255,255,0.03); }
+        .stamp-cell.stamped { color: var(--primary); font-weight: 700; background: rgba(74, 222, 128, 0.06); }
         
-        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(45, 90, 39, 0.3); display: none; z-index: 1000; justify-content: center; align-items: center; }
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); display: none; z-index: 1000; justify-content: center; align-items: center; }
         .modal-overlay.active { display: flex; }
-        .modal-card { background: white; padding: 20px; border-radius: 20px; width: 90%; max-width: 320px; text-align: center; border: 2px solid var(--primary); }
+        .modal-card { background: var(--card); padding: 24px; border-radius: 24px; width: 90%; max-width: 340px; text-align: center; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.7); }
+        .modal-card h3 { margin-top: 0; color: var(--text-main); font-weight: 700; }
         
-        .picker-container { display: flex; gap: 10px; margin: 15px 0; justify-content: center; }
-        .picker-btn { border: 1px solid var(--primary); background: #f0fdf4; width: 45px; height: 45px; cursor: pointer; border-radius: 50%; }
-        .picker-value { font-size: 1.2rem; font-weight: 800; margin: 5px 0; min-width: 35px; color: var(--primary); }
+        .picker-container { display: flex; gap: 12px; margin: 20px 0; justify-content: center; align-items: center; }
+        .picker-column { display: flex; flex-direction: column; align-items: center; }
+        .picker-btn { border: 1px solid var(--border); background: var(--card-inner); width: 40px; height: 40px; cursor: pointer; border-radius: 12px; color: var(--text-main); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
+        .picker-btn:hover { background: #2a2f42; }
+        .picker-value { font-size: 1.4rem; font-weight: 800; margin: 8px 0; min-width: 40px; color: var(--text-main); }
         
-        .action-btn { padding: 10px 20px; cursor: pointer; border: none; border-radius: 10px; font-weight: 700; margin: 5px; }
-        .btn-save { background: var(--primary); color: white; }
-        .btn-cancel { background: #e2e8f0; color: #475569; }
-        .btn-clear { background: #f87171; color: white; } /* Added red button for clear */
+        .btn-group { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 15px; }
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .action-btn { padding: 12px; cursor: pointer; border: none; border-radius: 12px; font-weight: 700; font-size: 0.9rem; transition: opacity 0.2s; }
+        .action-btn:hover { opacity: 0.9; }
+        .btn-save { background: var(--primary); color: #000000; }
+        .btn-cancel { background: var(--card-inner); color: var(--text-main); border: 1px solid var(--border); }
+        .btn-clear { background: rgba(248, 113, 113, 0.15); color: var(--danger); border: 1px solid rgba(248, 113, 113, 0.3); }
     </style>
 </head>
 <body>
@@ -58,18 +101,25 @@
         <div class="header-wrapper">
             <div style="position: relative; cursor: pointer;">
                 <h2 id="table-title">MONTH</h2>
-                <input type="month" id="month-input" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+                <input type="month" id="month-input" required style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
             </div>
             <div class="action-icon" onclick="exportToPNG()"><i data-lucide="download"></i></div>
         </div>
 
         <table>
-            <thead><tr><th>DATE</th><th>IN</th><th>OUT</th><th>TOTAL</th></tr></thead>
+            <thead>
+                <tr>
+                    <th style="border-top-left-radius: 12px;">DATE</th>
+                    <th>IN</th>
+                    <th>OUT</th>
+                    <th style="border-top-right-radius: 12px;">TOTAL</th>
+                </tr>
+            </thead>
             <tbody id="ot-table-body"></tbody>
             <tfoot>
-                <tr style="background: #f0fdf4;">
-                    <td colspan="3" style="text-align: right; padding-right: 10px; font-weight: 800; color: var(--primary);">TOTAL</td>
-                    <td id="grand-total" style="font-weight: 900; color: var(--success);">0h 00m</td>
+                <tr style="background: var(--card-inner);">
+                    <td colspan="3" style="text-align: right; padding-right: 15px; font-weight: 800; color: var(--text-muted); border-bottom-left-radius: 12px;">TOTAL</td>
+                    <td id="grand-total" style="font-weight: 900; color: var(--primary); border-bottom-right-radius: 12px;">0h 00m</td>
                 </tr>
             </tfoot>
         </table>
@@ -79,13 +129,30 @@
         <div class="modal-card">
             <h3>Set Time</h3>
             <div class="picker-container">
-                <div><button class="picker-btn" onclick="adjustValue('hr', 1)">▲</button><div id="val-hr" class="picker-value">12</div><button class="picker-btn" onclick="adjustValue('hr', -1)">▼</button></div>
-                <div><button class="picker-btn" onclick="adjustValue('mn', 5)">▲</button><div id="val-mn" class="picker-value">00</div><button class="picker-btn" onclick="adjustValue('mn', -5)">▼</button></div>
-                <div><button class="picker-btn" onclick="toggleAmPm()">▲</button><div id="val-ap" class="picker-value">AM</div><button class="picker-btn" onclick="toggleAmPm()">▼</button></div>
+                <div class="picker-column">
+                    <button class="picker-btn" onclick="adjustValue('hr', 1)">▲</button>
+                    <div id="val-hr" class="picker-value">12</div>
+                    <button class="picker-btn" onclick="adjustValue('hr', -1)">▼</button>
+                </div>
+                <div class="picker-column">
+                    <button class="picker-btn" onclick="adjustValue('mn', 5)">▲</button>
+                    <div id="val-mn" class="picker-value">00</div>
+                    <button class="picker-btn" onclick="adjustValue('mn', -5)">▼</button>
+                </div>
+                <div class="picker-column">
+                    <button class="picker-btn" onclick="toggleAmPm()">▲</button>
+                    <div id="val-ap" class="picker-value">AM</div>
+                    <button class="picker-btn" onclick="toggleAmPm()">▼</button>
+                </div>
             </div>
-            <button class="action-btn btn-clear" onclick="clearTime()">Clear</button>
-            <button class="action-btn btn-cancel" onclick="closeModal()">Cancel</button>
-            <button class="action-btn btn-save" onclick="saveModal()">Save</button>
+            
+            <div class="btn-group">
+                <button class="action-btn btn-clear" onclick="clearTime()">Clear Entry</button>
+                <div class="btn-row">
+                    <button class="action-btn btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button class="action-btn btn-save" onclick="saveModal()">Save</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -105,22 +172,52 @@
             for (let d = 1; d <= days; d++) {
                 if (!logData[val][d]) logData[val][d] = { inT: null, outT: null, diff: 0, inStr: '', outStr: '' };
                 let day = logData[val][d];
-                tbody.innerHTML += `<tr><td>${d}</td><td class="stamp-cell time-in-cell" data-day="${d}">${day.inStr || ''}</td><td class="stamp-cell time-out-cell" data-day="${d}">${day.outStr || ''}</td><td id="total-${d}">${Math.floor(day.diff/60)}h ${String(day.diff%60).padStart(2,'0')}m</td></tr>`;
+                
+                let inSticker = day.inStr ? 'stamped' : '';
+                let outSticker = day.outStr ? 'stamped' : '';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${d}</td>
+                        <td class="stamp-cell time-in-cell ${inSticker}" data-day="${d}">${day.inStr || '—'}</td>
+                        <td class="stamp-cell time-out-cell ${outSticker}" data-day="${d}">${day.outStr || '—'}</td>
+                        <td id="total-${d}" style="color: ${day.diff > 0 ? 'var(--text-main)' : 'var(--text-muted)'}">${Math.floor(day.diff/60)}h ${String(day.diff%60).padStart(2,'0')}m</td>
+                    </tr>`;
             }
             calcGrandTotal(val);
         }
 
-        tbody.addEventListener("click", (e) => { const cell = e.target.closest('.stamp-cell'); if (cell) { currentTargetCell = cell; document.getElementById('timeModal').classList.add('active'); } });
+        tbody.addEventListener("click", (e) => { 
+            const cell = e.target.closest('.stamp-cell'); 
+            if (cell) { 
+                currentTargetCell = cell;
+                const d = cell.dataset.day;
+                const isIn = cell.classList.contains('time-in-cell');
+                const existingStr = isIn ? logData[currentMonth][d].inStr : logData[currentMonth][d].outStr;
+                
+                if (existingStr) {
+                    const [time, ap] = existingStr.split(' ');
+                    const [hr, mn] = time.split(':');
+                    document.getElementById('val-hr').innerText = hr;
+                    document.getElementById('val-mn').innerText = mn;
+                    document.getElementById('val-ap').innerText = ap;
+                } else {
+                    document.getElementById('val-hr').innerText = "12";
+                    document.getElementById('val-mn').innerText = "00";
+                    document.getElementById('val-ap').innerText = "AM";
+                }
+                document.getElementById('timeModal').classList.add('active'); 
+            } 
+        });
         
         function adjustValue(t, a) { let el = document.getElementById(t === 'hr' ? 'val-hr' : 'val-mn'), v = parseInt(el.innerText) + a; if (t === 'hr') v = v > 12 ? 1 : (v < 1 ? 12 : v); else v = v >= 60 ? 0 : (v < 0 ? 55 : v); el.innerText = String(v).padStart(2, '0'); }
         function toggleAmPm() { let el = document.getElementById('val-ap'); el.innerText = el.innerText === 'AM' ? 'PM' : 'AM'; }
         
-        // Logic to clear time
         function clearTime() {
             let d = currentTargetCell.dataset.day;
             if (currentTargetCell.classList.contains('time-in-cell')) { logData[currentMonth][d].inT = null; logData[currentMonth][d].inStr = ''; } 
             else { logData[currentMonth][d].outT = null; logData[currentMonth][d].outStr = ''; }
-            currentTargetCell.innerText = ''; currentTargetCell.classList.remove('stamped');
+            currentTargetCell.innerText = '—'; currentTargetCell.classList.remove('stamped');
             calcDay(d); localStorage.setItem('otData', JSON.stringify(logData)); closeModal();
         }
 
@@ -135,7 +232,9 @@
 
         function calcDay(d) {
             let dayObj = logData[currentMonth][d]; dayObj.diff = Math.max(0, (dayObj.outT || 0) - (dayObj.inT || 0));
-            document.getElementById(`total-${d}`).innerText = `${Math.floor(dayObj.diff/60)}h ${String(dayObj.diff%60).padStart(2,'0')}m`;
+            const totalEl = document.getElementById(`total-${d}`);
+            totalEl.innerText = `${Math.floor(dayObj.diff/60)}h ${String(dayObj.diff%60).padStart(2,'0')}m`;
+            totalEl.style.color = dayObj.diff > 0 ? 'var(--text-main)' : 'var(--text-muted)';
             calcGrandTotal(currentMonth);
         }
 
@@ -145,9 +244,33 @@
         }
 
         function closeModal() { document.getElementById('timeModal').classList.remove('active'); }
-        function exportToPNG() { html2canvas(document.getElementById("capture-area"), { scale: 2 }).then(c => { let a = document.createElement("a"); a.download = "OVERTIME.png"; a.href = c.toDataURL(); a.click(); }); }
+        function exportToPNG() { 
+            html2canvas(document.getElementById("capture-area"), { 
+                scale: 2,
+                backgroundColor: "#090a0f"
+            }).then(c => { 
+                let a = document.createElement("a"); a.download = "OVERTIME.png"; a.href = c.toDataURL(); a.click(); 
+            }); 
+        }
         
-        monthInput.addEventListener("change", (e) => { currentMonth = e.target.value; renderTableGrid(currentMonth); });
+        monthInput.addEventListener("change", (e) => { 
+            if(!e.target.value) {
+                e.target.value = currentMonth;
+                return;
+            }
+            currentMonth = e.target.value; 
+            renderTableGrid(currentMonth); 
+        });
+
+        // Register Service Worker for PWA Add-to-Home-Screen functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker safely registered.'))
+                    .catch(err => console.log('Service Worker registration failed: ', err));
+            });
+        }
+
         init();
     </script>
 </body>
